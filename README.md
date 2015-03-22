@@ -1,10 +1,17 @@
+[![Build Status](https://travis-ci.org/ukautz/reflekt.svg?branch=master)](https://travis-ci.org/ukautz/reflekt)
+
 reflekt
 =======
 
 This package provides lazy developers shorthands for determining or casting
 (to) primitive Go types.
 
-My use it mainly in the context of parsing non-uniform data.
+My use is mainly in the context of parsing non-uniform data.
+
+Documentation
+-------------
+
+GoDoc can be [found here](http://godoc.org/github.com/ukautz/reflekt)
 
 Examples
 --------
