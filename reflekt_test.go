@@ -4,6 +4,8 @@ import (
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
+	"sort"
+	"strings"
 	"testing"
 )
 
@@ -111,6 +113,21 @@ var testsInt = []struct {
 		from:      "false",
 		recognize: false,
 		to:        0,
+	},
+	{
+		from:      reflect.ValueOf(6),
+		recognize: true,
+		to:        6,
+	},
+	{
+		from:      reflect.ValueOf(6.3),
+		recognize: false,
+		to:        6,
+	},
+	{
+		from:      reflect.ValueOf("6.3"),
+		recognize: false,
+		to:        6,
 	},
 	{
 		from:      "foo",
@@ -232,6 +249,21 @@ var testsFloat = []struct {
 		to:        float64(123.345),
 	},
 	{
+		from:      reflect.ValueOf(6),
+		recognize: false,
+		to:        float64(6.0),
+	},
+	{
+		from:      reflect.ValueOf(6.3),
+		recognize: true,
+		to:        float64(6.3),
+	},
+	{
+		from:      reflect.ValueOf("6.3"),
+		recognize: false,
+		to:        float64(6.3),
+	},
+	{
 		from:      "foo",
 		recognize: false,
 		to:        float64(0),
@@ -303,6 +335,18 @@ var testsBool = []struct {
 		to:   true,
 	},
 	{
+		from: reflect.ValueOf(true),
+		to:   true,
+	},
+	{
+		from: reflect.ValueOf("1"),
+		to:   true,
+	},
+	{
+		from: reflect.ValueOf(1),
+		to:   true,
+	},
+	{
 		from: 0,
 		to:   false,
 	},
@@ -330,6 +374,10 @@ var testsBool = []struct {
 		from: "0",
 		to:   false,
 	},
+	{
+		from: reflect.ValueOf(false),
+		to:   false,
+	},
 }
 
 func TestAsBool(t *testing.T) {
@@ -353,7 +401,7 @@ var testsString = []struct {
 	},
 	{
 		from: 1.1,
-		to:   "1.100000",
+		to:   "1.1",
 	},
 	{
 		from: uint(1),
@@ -372,6 +420,18 @@ var testsString = []struct {
 		to:   "foo",
 	},
 	{
+		from: reflect.ValueOf("foo"),
+		to:   "foo",
+	},
+	{
+		from: reflect.ValueOf(123),
+		to:   "123",
+	},
+	{
+		from: reflect.ValueOf(true),
+		to:   "true",
+	},
+	{
 		from: map[string]interface{}{"foo": "bar"},
 		to:   "",
 	},
@@ -386,4 +446,182 @@ func TestAsString(t *testing.T) {
 			})
 		}
 	})
+}
+
+var testsIntMap = []struct {
+	from interface{}
+	to   map[string]int
+}{
+	{
+		from: 1,
+		to:   map[string]int{},
+	},
+	{
+		from: map[interface{}]interface{}{"foo": 1, "bar": "2", "baz": 3.4, "zoing": true},
+		to:   map[string]int{"foo": 1, "bar": 2, "baz": 3, "zoing": 1},
+	},
+	{
+		from: map[string]float64{"foo": 1, "bar": 2},
+		to:   map[string]int{"foo": 1, "bar": 2},
+	},
+	{
+		from: map[string]string{"foo": "1", "bar": "2", "baz": "3.4", "zoing": "true"},
+		to:   map[string]int{"foo": 1, "bar": 2, "baz": 3, "zoing": 1},
+	},
+	{
+		from: map[string]int{"foo": 1, "bar": 2, "baz": 3, "zoing": 1},
+		to:   map[string]int{"foo": 1, "bar": 2, "baz": 3, "zoing": 1},
+	},
+}
+
+func TestAsIntMap(t *testing.T) {
+	Convey("Try casting any map to map[string]int", t, func() {
+		for idx, test := range testsIntMap {
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				So(AsIntMap(test.from), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
+var testsFloatMap = []struct {
+	from interface{}
+	to   map[string]float64
+}{
+	{
+		from: 1,
+		to:   map[string]float64{},
+	},
+	{
+		from: map[interface{}]interface{}{"foo": 1, "bar": "2.1", "baz": 3.4, "zoing": true},
+		to:   map[string]float64{"foo": 1, "bar": 2.1, "baz": 3.4, "zoing": 1},
+	},
+	{
+		from: map[string]int{"foo": 1, "bar": 2},
+		to:   map[string]float64{"foo": 1, "bar": 2},
+	},
+	{
+		from: map[string]string{"foo": "1", "bar": "3.4", "baz": "true"},
+		to:   map[string]float64{"foo": 1, "bar": 3.4, "baz": 1},
+	},
+	{
+		from: map[string]float64{"foo": 1, "bar": 2, "baz": 1},
+		to:   map[string]float64{"foo": 1, "bar": 2, "baz": 1},
+	},
+}
+
+func TestAsFloatMap(t *testing.T) {
+	Convey("Try casting any map to map[string]float64", t, func() {
+		for idx, test := range testsFloatMap {
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				So(AsFloatMap(test.from), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
+var testsBoolMap = []struct {
+	from interface{}
+	to   map[string]bool
+}{
+	{
+		from: 1,
+		to:   map[string]bool{},
+	},
+	{
+		from: map[interface{}]interface{}{"foo": 1, "bar": "2.1", "baz": 3.4, "zoing": true},
+		to:   map[string]bool{"foo": true, "bar": true, "baz": true, "zoing": true},
+	},
+	{
+		from: map[string]int{"foo": 1, "bar": 0},
+		to:   map[string]bool{"foo": true, "bar": false},
+	},
+	{
+		from: map[string]float64{"foo": 1.3, "bar": 0},
+		to:   map[string]bool{"foo": true, "bar": false},
+	},
+	{
+		from: map[string]string{"foo": "1", "bar": "3.4", "baz": "true", "zoing": "false"},
+		to:   map[string]bool{"foo": true, "bar": true, "baz": true, "zoing": false},
+	},
+	{
+		from: map[string]bool{"foo": true, "bar": false},
+		to:   map[string]bool{"foo": true, "bar": false},
+	},
+}
+
+func TestAsBoolMap(t *testing.T) {
+	Convey("Try casting any map to map[string]bool", t, func() {
+		for idx, test := range testsBoolMap {
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				So(AsBoolMap(test.from), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
+var testsStringMap = []struct {
+	from interface{}
+	to   map[string]string
+}{
+	{
+		from: 1,
+		to:   map[string]string{},
+	},
+	{
+		from: map[interface{}]interface{}{"foo": 1, "bar": "2.1", "baz": 3.4, "zoing": true},
+		to:   map[string]string{"foo": "1", "bar": "2.1", "baz": "3.4", "zoing": "true"},
+	},
+	{
+		from: map[string]int{"foo": 1, "bar": 0},
+		to:   map[string]string{"foo": "1", "bar": "0"},
+	},
+	{
+		from: map[string]float64{"foo": 1.3, "bar": 0},
+		to:   map[string]string{"foo": "1.3", "bar": "0"},
+	},
+	{
+		from: map[string]bool{"foo": true, "bar": false},
+		to:   map[string]string{"foo": "true", "bar": "false"},
+	},
+	{
+		from: map[string]string{"foo": "1", "bar": "3.4", "baz": "true", "zoing": "false"},
+		to:   map[string]string{"foo": "1", "bar": "3.4", "baz": "true", "zoing": "false"},
+	},
+}
+
+func TestAsStringMap(t *testing.T) {
+	Convey("Try casting any map to map[string]string", t, func() {
+		for idx, test := range testsStringMap {
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				So(AsStringMap(test.from), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
+func serializeMap(v interface{}) string {
+	r := reflect.ValueOf(v)
+	if r.Kind() != reflect.Map {
+		return fmt.Sprintf("%v", r.Interface())
+	}
+	keys := []string{}
+	orig := make(map[string]reflect.Value)
+	for _, k := range r.MapKeys() {
+		kv := fmt.Sprintf("%s", k.Interface())
+		keys = append(keys, kv)
+		orig[kv] = k
+	}
+	sort.Strings(keys)
+
+	out := []string{}
+	for _, k := range keys {
+		out = append(out, fmt.Sprintf("%s: %v", k, r.MapIndex(orig[k]).Interface()))
+	}
+
+	return fmt.Sprintf("%s{%s}", r.Type(), strings.Join(out, ", "))
 }
