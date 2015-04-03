@@ -230,3 +230,32 @@ func AsStringMap(v interface{}) map[string]string {
 	}
 	return res
 }
+
+// MergeMaps takes arbitrary maps of the same type and merges them into a new one
+// TODO: does not fit here -> new package!
+func MergeMaps(v ...interface{}) (interface{}, error) {
+	expect := ""
+	var res reflect.Value
+	for i, m := range v {
+		r := reflect.ValueOf(m)
+		if r.Kind() != reflect.Map {
+			return nil, fmt.Errorf("Parameter %d is not a map but %s", i, r.Kind())
+		}
+		if expect == "" {
+			expect = r.Type().String()
+			res = reflect.New(r.Type())
+		} else if r.Type().String() != expect {
+			return nil, fmt.Errorf("All maps must be of the same type. Expect %s, got %s (parameter: %d)", expect, r.Type(), i)
+		}
+		for _, k := range r.MapKeys() {
+			res.SetMapIndex(k, r.MapIndex(k))
+		}
+	}
+
+	return res.Interface(), nil
+}
+
+
+
+
+
