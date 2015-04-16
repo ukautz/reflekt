@@ -604,6 +604,31 @@ func TestAsStringMap(t *testing.T) {
 	})
 }
 
+var testsInterfaceMap = []struct {
+	from interface{}
+	to   map[string]interface{}
+}{
+	{
+		from: 1,
+		to:   map[string]interface{}{},
+	},
+	{
+		from: map[interface{}]interface{}{"foo": 1, "bar": "2.1", "baz": 3.4, "zoing": true},
+		to:   map[string]interface{}{"foo": 1, "bar": "2.1", "baz": 3.4, "zoing": true},
+	},
+}
+
+func TestAsInterfaceMap(t *testing.T) {
+	Convey("Try casting any map to map[string]interface{}", t, func() {
+		for idx, test := range testsInterfaceMap {
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				So(AsInterfaceMap(test.from), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
 func serializeMap(v interface{}) string {
 	r := reflect.ValueOf(v)
 	if r.Kind() != reflect.Map {

@@ -231,6 +231,26 @@ func AsStringMap(v interface{}) map[string]string {
 	return res
 }
 
+// AsInterfaceMap tries to return any map[interface{}]interface{} as map[string]interface{}.
+// Returns nil if v is not a map
+func AsInterfaceMap(v interface{}) map[string]interface{} {
+	res := make(map[string]interface{})
+	r := reflect.ValueOf(v)
+	if r.Kind() != reflect.Map {
+		//fmt.Printf("\n>> NOT map: %v (%s)\n", r.Interface(), r.Kind())
+		return res
+	}
+	for _, k := range r.MapKeys() {
+		if kk := AsString(k); kk != "" {
+			//fmt.Printf("%s = %+v (%s) ~ %v\n", kk, r.MapIndex(k).Kind(), r.MapIndex(k).Type().String(), r.MapIndex(k).Interface())
+			res[kk] = r.MapIndex(k).Interface()
+		}
+	}
+	return res
+}
+
+
+
 // MergeMaps takes arbitrary maps of the same type and merges them into a new one
 // TODO: does not fit here -> new package!
 func MergeMaps(v ...interface{}) (interface{}, error) {
