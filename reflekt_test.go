@@ -644,6 +644,22 @@ type t3 struct {
 	Foo string
 }
 
+type i1 interface {
+	Foo() string
+}
+
+type t4 struct {
+	T string
+}
+
+func (this *t4) Foo() string {
+	return this.T
+}
+
+type t5 struct {
+	I i1
+}
+
 var testsStructAsMap = []struct {
 	from interface{}
 	to   map[string]interface{}
@@ -687,6 +703,16 @@ var testsStructAsMap = []struct {
 			},
 		},
 		lc: true,
+	},
+	{
+		from: t5 {
+			I: &t4{"bar"},
+		},
+		to: map[string]interface{}{
+			"I": map[string]interface{}{
+				"T": "bar",
+			},
+		},
 	},
 }
 

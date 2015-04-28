@@ -237,6 +237,9 @@ func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
 	}
 	res := make(map[string]interface{})
 	r := reflect.ValueOf(v)
+	for r.Kind() == reflect.Ptr {
+		r = r.Elem()
+	}
 	switch r.Kind() {
 	case reflect.Struct:
 		t := r.Type()
@@ -246,7 +249,7 @@ func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
 			if lc {
 				n = strings.ToLower(n)
 			}
-			for f.Kind() == reflect.Ptr && f.Elem().Kind() == reflect.Struct {
+			for f.Kind() == reflect.Ptr || f.Kind() == reflect.Interface {
 				f = f.Elem()
 			}
 			switch f.Kind() {
