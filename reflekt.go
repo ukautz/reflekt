@@ -229,6 +229,28 @@ func AsInterfaceMap(v interface{}) map[string]interface{} {
 }
 
 
+func structElemAs(f reflect.Value, lc bool) interface{} {
+	for f.Kind() == reflect.Ptr || f.Kind() == reflect.Interface {
+		f = f.Elem()
+	}
+	switch f.Kind() {
+	case reflect.Struct:
+		return StructAsMap(f.Interface(), lc)
+	case reflect.Slice:
+		s := make([]interface{}, f.Len())
+		for i := 0; i < f.Len(); i++ {
+			x := f.Index(i)
+			for x.Kind() == reflect.Ptr || x.Kind() == reflect.Interface {
+				x = x.Elem()
+			}
+			s[i] = structElemAs(x, lc)
+		}
+		return s
+	default:
+		return f.Interface()
+	}
+}
+
 // StructAsMap converts given struct into `map[string]interface{}`
 func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
 	lc := false
@@ -249,15 +271,7 @@ func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
 			if lc {
 				n = strings.ToLower(n)
 			}
-			for f.Kind() == reflect.Ptr || f.Kind() == reflect.Interface {
-				f = f.Elem()
-			}
-			switch f.Kind() {
-			case reflect.Struct:
-				res[n] = StructAsMap(f.Interface(), lc)
-			default:
-				res[n] = f.Interface()
-			}
+			res[n] = structElemAs(f, lc)
 		}
 	}
 	return res

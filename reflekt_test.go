@@ -660,6 +660,10 @@ type t5 struct {
 	I i1
 }
 
+type t6 struct {
+	I []i1
+}
+
 var testsStructAsMap = []struct {
 	from interface{}
 	to   map[string]interface{}
@@ -711,6 +715,20 @@ var testsStructAsMap = []struct {
 		to: map[string]interface{}{
 			"I": map[string]interface{}{
 				"T": "bar",
+			},
+		},
+	},
+	{
+		from: t6 {
+			I: []i1{
+				&t4{"bar"},
+				&t4{"baz"},
+			},
+		},
+		to: map[string]interface{}{
+			"I": []interface{}{
+				map[string]interface{}{"T": "bar"},
+				map[string]interface{}{"T": "baz"},
 			},
 		},
 	},
