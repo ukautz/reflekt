@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // IsIntKind checks if provided kind is of any unsigned integer kind
@@ -159,96 +160,105 @@ func AsString(v interface{}) string {
 	}
 }
 
-// AsIntMap tries to return any map[interface{}]interface{} as map[string]int.
-// Returns nil if v is not a map
-func AsIntMap(v interface{}) map[string]int {
-	res := make(map[string]int)
+// AsMap converts given map into other map
+func AsMap(v interface{}, key reflect.Type, val reflect.Type, add func(to reflect.Value, key reflect.Value, val reflect.Value)) reflect.Value {
+	res := reflect.MakeMap(reflect.MapOf(key, val))
 	r := reflect.ValueOf(v)
-	if r.Kind() != reflect.Map {
-		//fmt.Printf("\n>> NOT map: %v (%s)\n", r.Interface(), r.Kind())
-		return res
-	}
-	for _, k := range r.MapKeys() {
-		if kk := AsString(k); kk != "" {
-			//fmt.Printf("%s = %+v (%s) ~ %v\n", kk, r.MapIndex(k).Kind(), r.MapIndex(k).Type().String(), r.MapIndex(k).Interface())
-			res[kk] = AsInt(r.MapIndex(k))
+	switch r.Kind() {
+	case reflect.Map:
+		for _, k := range r.MapKeys() {
+			add(res, k, r.MapIndex(k))
 		}
 	}
 	return res
+}
+
+// AsIntMap tries to return any map[interface{}]interface{} as map[string]int.
+// Returns nil if v is not a map
+func AsIntMap(v interface{}) map[string]int {
+	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(0), func(to reflect.Value, key reflect.Value, val reflect.Value) {
+		k := reflect.ValueOf(AsString(key))
+		v := reflect.ValueOf(AsInt(val))
+		to.SetMapIndex(k, v)
+	})
+	return m.Interface().(map[string]int)
 }
 
 // AsFloatMap tries to return any map[interface{}]interface{} as map[string]float.
 // Returns nil if v is not a map
 func AsFloatMap(v interface{}) map[string]float64 {
-	res := make(map[string]float64)
-	r := reflect.ValueOf(v)
-	if r.Kind() != reflect.Map {
-		//fmt.Printf("\n>> NOT map: %v (%s)\n", r.Interface(), r.Kind())
-		return res
-	}
-	for _, k := range r.MapKeys() {
-		if kk := AsString(k); kk != "" {
-			//fmt.Printf("%s = %+v (%s) ~ %v\n", kk, r.MapIndex(k).Kind(), r.MapIndex(k).Type().String(), r.MapIndex(k).Interface())
-			res[kk] = AsFloat(r.MapIndex(k))
-		}
-	}
-	return res
+	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(0.0), func(to reflect.Value, key reflect.Value, val reflect.Value) {
+		k := reflect.ValueOf(AsString(key))
+		v := reflect.ValueOf(AsFloat(val))
+		to.SetMapIndex(k, v)
+	})
+	return m.Interface().(map[string]float64)
 }
 
 // AsBoolMap tries to return any map[interface{}]interface{} as map[string]bool.
 // Returns nil if v is not a map
 func AsBoolMap(v interface{}) map[string]bool {
-	res := make(map[string]bool)
-	r := reflect.ValueOf(v)
-	if r.Kind() != reflect.Map {
-		//fmt.Printf("\n>> NOT map: %v (%s)\n", r.Interface(), r.Kind())
-		return res
-	}
-	for _, k := range r.MapKeys() {
-		if kk := AsString(k); kk != "" {
-			//fmt.Printf("%s = %+v (%s) ~ %v\n", kk, r.MapIndex(k).Kind(), r.MapIndex(k).Type().String(), r.MapIndex(k).Interface())
-			res[kk] = AsBool(r.MapIndex(k))
-		}
-	}
-	return res
+	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(true), func(to reflect.Value, key reflect.Value, val reflect.Value) {
+		k := reflect.ValueOf(AsString(key))
+		v := reflect.ValueOf(AsBool(val))
+		to.SetMapIndex(k, v)
+	})
+	return m.Interface().(map[string]bool)
 }
 
 // AsStringMap tries to return any map[interface{}]interface{} as map[string]string.
 // Returns nil if v is not a map
 func AsStringMap(v interface{}) map[string]string {
-	res := make(map[string]string)
-	r := reflect.ValueOf(v)
-	if r.Kind() != reflect.Map {
-		//fmt.Printf("\n>> NOT map: %v (%s)\n", r.Interface(), r.Kind())
-		return res
-	}
-	for _, k := range r.MapKeys() {
-		if kk := AsString(k); kk != "" {
-			//fmt.Printf("%s = %+v (%s) ~ %v\n", kk, r.MapIndex(k).Kind(), r.MapIndex(k).Type().String(), r.MapIndex(k).Interface())
-			res[kk] = AsString(r.MapIndex(k))
-		}
-	}
-	return res
+	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(""), func(to reflect.Value, key reflect.Value, val reflect.Value) {
+		k := reflect.ValueOf(AsString(key))
+		v := reflect.ValueOf(AsString(val))
+		to.SetMapIndex(k, v)
+	})
+	return m.Interface().(map[string]string)
 }
 
 // AsInterfaceMap tries to return any map[interface{}]interface{} as map[string]interface{}.
 // Returns nil if v is not a map
 func AsInterfaceMap(v interface{}) map[string]interface{} {
+	i := reflect.TypeOf((*interface{})(nil)).Elem()
+	m := AsMap(v, reflect.TypeOf(""), i, func(to reflect.Value, key reflect.Value, val reflect.Value) {
+		k := reflect.ValueOf(AsString(key))
+		to.SetMapIndex(k, val)
+	})
+	return m.Interface().(map[string]interface{})
+}
+
+
+// StructAsMap converts given struct into `map[string]interface{}`
+func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
+	lc := false
+	if len(lowerCase) > 0 && lowerCase[0] {
+		lc = true
+	}
 	res := make(map[string]interface{})
 	r := reflect.ValueOf(v)
-	if r.Kind() != reflect.Map {
-		//fmt.Printf("\n>> NOT map: %v (%s)\n", r.Interface(), r.Kind())
-		return res
-	}
-	for _, k := range r.MapKeys() {
-		if kk := AsString(k); kk != "" {
-			//fmt.Printf("%s = %+v (%s) ~ %v\n", kk, r.MapIndex(k).Kind(), r.MapIndex(k).Type().String(), r.MapIndex(k).Interface())
-			res[kk] = r.MapIndex(k).Interface()
+	switch r.Kind() {
+	case reflect.Struct:
+		t := r.Type()
+		for i := 0; i < r.NumField(); i++ {
+			f := r.Field(i)
+			n := t.Field(i).Name
+			if lc {
+				n = strings.ToLower(n)
+			}
+			for f.Kind() == reflect.Ptr && f.Elem().Kind() == reflect.Struct {
+				f = f.Elem()
+			}
+			switch f.Kind() {
+			case reflect.Struct:
+				res[n] = StructAsMap(f.Interface(), lc)
+			default:
+				res[n] = f.Interface()
+			}
 		}
 	}
 	return res
 }
-
 
 
 // MergeMaps takes arbitrary maps of the same type and merges them into a new one
@@ -274,7 +284,6 @@ func MergeMaps(v ...interface{}) (interface{}, error) {
 
 	return res.Interface(), nil
 }
-
 
 
 

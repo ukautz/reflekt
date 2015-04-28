@@ -629,6 +629,78 @@ func TestAsInterfaceMap(t *testing.T) {
 	})
 }
 
+type t1 struct {
+	A int
+	B string
+	C t2
+}
+
+type t2 struct {
+	D int
+	E *t3
+}
+
+type t3 struct {
+	Foo string
+}
+
+var testsStructAsMap = []struct {
+	from interface{}
+	to   map[string]interface{}
+	lc   bool
+}{
+	{
+		from: 1,
+		to:   map[string]interface{}{},
+	},
+	{
+		from: struct{ X int }{X: 1},
+		to:   map[string]interface{}{"X": 1},
+	},
+	{
+		from: struct {
+			X int
+			Y string
+		}{X: 1, Y: "bla"},
+		to: map[string]interface{}{"x": 1, "y": "bla"},
+		lc: true,
+	},
+	{
+		from: t1{
+			A: 1,
+			B: "two",
+			C: t2{
+				D: 3,
+				E: &t3{
+					Foo: "Bar",
+				},
+			},
+		},
+		to: map[string]interface{}{
+			"a": 1,
+			"b": "two",
+			"c": map[string]interface{}{
+				"d": 3,
+				"e": map[string]interface{}{
+					"foo": "Bar",
+				},
+			},
+		},
+		lc: true,
+	},
+}
+
+func TestStructAsMap(t *testing.T) {
+	Convey("Try casting any map to map[string]interface{}", t, func() {
+		for idx, test := range testsStructAsMap {
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				So(StructAsMap(test.from, test.lc), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
 func serializeMap(v interface{}) string {
 	r := reflect.ValueOf(v)
 	if r.Kind() != reflect.Map {
