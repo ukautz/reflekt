@@ -277,6 +277,89 @@ func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
 	return res
 }
 
+func fillStruct(s interface{}, d map[string]interface{}, p string) error {
+	r := reflect.ValueOf(s)
+	prefix := p
+	if prefix != "" {
+		prefix = prefix + " "
+	}
+	fmt.Printf("Starting with %s (%s)\n", r.Kind(), prefix)
+	w := []string{}
+	for r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+		w = append(w, r.Kind().String())
+		r = r.Elem()
+		fmt.Printf(" > Hopping to %s\n", r.Kind())
+	}
+	fmt.Printf("Using now %s (%s)\n", r.Kind(), prefix)
+	if r.Kind() != reflect.Struct {
+		return fmt.Errorf(prefix+ "Expected (ptr|interface)+ -> struct, got %s -> %s", strings.Join(w, " -> "), r.Kind())
+	}
+	t := r.Type()
+	if r.Kind() == reflect.Interface {
+		t = r.Elem().Type()
+	}
+
+	for i := 0; i < t.NumField(); i++ {
+		fv := r.Field(i)
+		ft := t.Field(i)
+		if !fv.CanSet() {
+			fmt.Printf("- Cannot set %s\n", ft.Name)
+			continue
+		}
+		for _, n := range []string{ft.Name, strings.ToLower(ft.Name)} {
+			if v, ok := d[n]; ok {
+				fk := fv.Kind()
+				vv := reflect.ValueOf(v)
+				if IsIntKind(fk) {
+					fv.SetInt(int64(AsInt(v)))
+				} else if IsFloatKind(fk) {
+					fv.SetFloat(AsFloat(v))
+				} else if fk == reflect.Bool {
+					fv.SetBool(AsBool(v))
+				} else if fk == reflect.String {
+					fv.SetString(AsString(v))
+				} else if fk == reflect.Struct || fk == reflect.Ptr || fk == reflect.Interface {
+					if (fk == reflect.Ptr || fk == reflect.Interface) && fv.IsNil() {
+						fmt.Printf("... NIL!\n")
+					}
+					if vv.Kind() == reflect.Map {
+						var err error
+						var sub reflect.Value
+						if fk == reflect.Struct {
+							fmt.Printf("  SUB IS STRUCT\n");
+							sub = reflect.New(fv.Type())
+						} else {
+							fmt.Printf("  SUB IS %s (%s) (%s)\n", fk, ft.Type, fv.Type().Elem());
+							sub = reflect.New(fv.Type().Elem())
+						}
+						err = fillStruct(sub.Interface(), AsInterfaceMap(v), p+ n+ ":")
+						if err != nil {
+							return err
+						}
+						if fk == reflect.Struct {
+							fv.Set(sub)
+						} else {
+							fv.Set(sub.Addr())
+						}
+					} else {
+						return fmt.Errorf(prefix+ "Cannot fill sub-struct %s from %s", n, vv.Kind())
+					}
+				} else if fk == vv.Kind() {
+					fv.Set(vv)
+				} else {
+					return fmt.Errorf(prefix+ "Cannot fill %s (%s) from %s", n, fk, vv.Kind())
+				}
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+func FillStruct(s interface{}, d map[string]interface{}) error {
+	return fillStruct(s, d, "")
+}
+
 
 // MergeMaps takes arbitrary maps of the same type and merges them into a new one
 // TODO: does not fit here -> new package!

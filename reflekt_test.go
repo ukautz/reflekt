@@ -637,10 +637,10 @@ type t1 struct {
 
 type t2 struct {
 	D int
-	E *t3
+	E *T3
 }
 
-type t3 struct {
+type T3 struct {
 	Foo string
 }
 
@@ -691,7 +691,7 @@ var testsStructAsMap = []struct {
 			B: "two",
 			C: t2{
 				D: 3,
-				E: &t3{
+				E: &T3{
 					Foo: "Bar",
 				},
 			},
@@ -709,7 +709,7 @@ var testsStructAsMap = []struct {
 		lc: true,
 	},
 	{
-		from: t5 {
+		from: t5{
 			I: &t4{"bar"},
 		},
 		to: map[string]interface{}{
@@ -719,7 +719,7 @@ var testsStructAsMap = []struct {
 		},
 	},
 	{
-		from: t6 {
+		from: t6{
 			I: []i1{
 				&t4{"bar"},
 				&t4{"baz"},
@@ -740,6 +740,25 @@ func TestStructAsMap(t *testing.T) {
 			r := reflect.ValueOf(test.from)
 			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
 				So(StructAsMap(test.from, test.lc), ShouldResemble, test.to)
+			})
+		}
+	})
+}
+
+func TestFillStruct(t *testing.T) {
+	Convey("Try filling struct from map[string]interface{}", t, func() {
+		for idx, test := range testsStructAsMap {
+			if idx != 3 {
+				continue
+			}
+			r := reflect.ValueOf(test.from)
+			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+				s := reflect.New(reflect.TypeOf(test.from))
+				err := FillStruct(s.Interface(), test.to)
+				fmt.Printf("SHOULD: %s\n", reflect.ValueOf(test.from).Kind())
+				fmt.Printf("IS    : %s\n", reflect.ValueOf(s).Kind())
+				So(err, ShouldBeNil)
+				So(s.Elem().Interface(), ShouldResemble, test.from)
 			})
 		}
 	})
