@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
 // IsIntKind checks if provided kind is of any unsigned integer kind
@@ -36,6 +35,7 @@ func IsFloatKind(k reflect.Kind) bool {
 
 // IsFloat checks if value is of any float kind
 func IsFloat(v interface{}) bool {
+
 	var k reflect.Kind
 	switch v.(type) {
 	case reflect.Value:
@@ -43,6 +43,7 @@ func IsFloat(v interface{}) bool {
 	default:
 		k = reflect.ValueOf(v).Kind()
 	}
+	
 	return IsFloatKind(k)
 }
 
@@ -52,6 +53,10 @@ func AsInt(v interface{}) int {
 	if r.Type().String() == `reflect.Value` {
 		r = v.(reflect.Value)
 	}
+
+	e
+
+
 	k := r.Kind()
 	switch {
 	case IsIntKind(k):
@@ -228,139 +233,6 @@ func AsInterfaceMap(v interface{}) map[string]interface{} {
 	return m.Interface().(map[string]interface{})
 }
 
-
-func structElemAs(f reflect.Value, lc bool) interface{} {
-	for f.Kind() == reflect.Ptr || f.Kind() == reflect.Interface {
-		f = f.Elem()
-	}
-	switch f.Kind() {
-	case reflect.Struct:
-		return StructAsMap(f.Interface(), lc)
-	case reflect.Slice:
-		s := make([]interface{}, f.Len())
-		for i := 0; i < f.Len(); i++ {
-			x := f.Index(i)
-			for x.Kind() == reflect.Ptr || x.Kind() == reflect.Interface {
-				x = x.Elem()
-			}
-			s[i] = structElemAs(x, lc)
-		}
-		return s
-	default:
-		return f.Interface()
-	}
-}
-
-// StructAsMap converts given struct into `map[string]interface{}`
-func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
-	lc := false
-	if len(lowerCase) > 0 && lowerCase[0] {
-		lc = true
-	}
-	res := make(map[string]interface{})
-	r := reflect.ValueOf(v)
-	for r.Kind() == reflect.Ptr {
-		r = r.Elem()
-	}
-	switch r.Kind() {
-	case reflect.Struct:
-		t := r.Type()
-		for i := 0; i < r.NumField(); i++ {
-			f := r.Field(i)
-			n := t.Field(i).Name
-			if lc {
-				n = strings.ToLower(n)
-			}
-			res[n] = structElemAs(f, lc)
-		}
-	}
-	return res
-}
-
-func fillStruct(s interface{}, d map[string]interface{}, p string) error {
-	r := reflect.ValueOf(s)
-	prefix := p
-	if prefix != "" {
-		prefix = prefix + " "
-	}
-	fmt.Printf("Starting with %s (%s)\n", r.Kind(), prefix)
-	w := []string{}
-	for r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
-		w = append(w, r.Kind().String())
-		r = r.Elem()
-		fmt.Printf(" > Hopping to %s\n", r.Kind())
-	}
-	fmt.Printf("Using now %s (%s)\n", r.Kind(), prefix)
-	if r.Kind() != reflect.Struct {
-		return fmt.Errorf(prefix+ "Expected (ptr|interface)+ -> struct, got %s -> %s", strings.Join(w, " -> "), r.Kind())
-	}
-	t := r.Type()
-	if r.Kind() == reflect.Interface {
-		t = r.Elem().Type()
-	}
-
-	for i := 0; i < t.NumField(); i++ {
-		fv := r.Field(i)
-		ft := t.Field(i)
-		if !fv.CanSet() {
-			fmt.Printf("- Cannot set %s\n", ft.Name)
-			continue
-		}
-		for _, n := range []string{ft.Name, strings.ToLower(ft.Name)} {
-			if v, ok := d[n]; ok {
-				fk := fv.Kind()
-				vv := reflect.ValueOf(v)
-				if IsIntKind(fk) {
-					fv.SetInt(int64(AsInt(v)))
-				} else if IsFloatKind(fk) {
-					fv.SetFloat(AsFloat(v))
-				} else if fk == reflect.Bool {
-					fv.SetBool(AsBool(v))
-				} else if fk == reflect.String {
-					fv.SetString(AsString(v))
-				} else if fk == reflect.Struct || fk == reflect.Ptr || fk == reflect.Interface {
-					if (fk == reflect.Ptr || fk == reflect.Interface) && fv.IsNil() {
-						fmt.Printf("... NIL!\n")
-					}
-					if vv.Kind() == reflect.Map {
-						var err error
-						var sub reflect.Value
-						if fk == reflect.Struct {
-							fmt.Printf("  SUB IS STRUCT\n");
-							sub = reflect.New(fv.Type())
-						} else {
-							fmt.Printf("  SUB IS %s (%s) (%s)\n", fk, ft.Type, fv.Type().Elem());
-							sub = reflect.New(fv.Type().Elem())
-						}
-						err = fillStruct(sub.Interface(), AsInterfaceMap(v), p+ n+ ":")
-						if err != nil {
-							return err
-						}
-						if fk == reflect.Struct {
-							fv.Set(sub)
-						} else {
-							fv.Set(sub.Addr())
-						}
-					} else {
-						return fmt.Errorf(prefix+ "Cannot fill sub-struct %s from %s", n, vv.Kind())
-					}
-				} else if fk == vv.Kind() {
-					fv.Set(vv)
-				} else {
-					return fmt.Errorf(prefix+ "Cannot fill %s (%s) from %s", n, fk, vv.Kind())
-				}
-				continue
-			}
-		}
-	}
-	return nil
-}
-
-func FillStruct(s interface{}, d map[string]interface{}) error {
-	return fillStruct(s, d, "")
-}
-
-
 // MergeMaps takes arbitrary maps of the same type and merges them into a new one
 // TODO: does not fit here -> new package!
 func MergeMaps(v ...interface{}) (interface{}, error) {
@@ -384,7 +256,3 @@ func MergeMaps(v ...interface{}) (interface{}, error) {
 
 	return res.Interface(), nil
 }
-
-
-
-
