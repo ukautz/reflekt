@@ -54,8 +54,6 @@ func AsInt(v interface{}) int {
 		r = v.(reflect.Value)
 	}
 
-	e
-
 
 	k := r.Kind()
 	switch {

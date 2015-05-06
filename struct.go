@@ -63,21 +63,119 @@ func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
 	return structAsMap(v, len(lowerCase) > 0 && lowerCase[0], nil)
 }
 
-
-
+// StructFiller is going to be an awesome tool to simply fill structs from maps (thereby JSON and all that).. just not yet
 type StructFiller struct {
 	m map[reflect.Type]func(v interface{}) reflect.Type
 }
 
+// NewStructFiller generates new filler.. DONT USE IT, YET
 func NewStructFiller() *StructFiller {
 	return &StructFiller{
 		m: make(map[reflect.Type]func(v interface{}) reflect.Type),
 	}
 }
 
+// Register assigns concrete structs to interfaces.. since interface-type values cannot be created
 func (this *StructFiller) Register(iface reflect.Type, determine func(v interface{}) reflect.Type) *StructFiller {
 	this.m[iface] = determine
 	return this
+}
+
+func (this *StructFiller) set(fv reflect.Value, ft reflect.StructField, d map[string]interface{}, p, prefix string) error {
+	if !fv.CanSet() {
+		fmt.Printf("- Cannot set %s\n", ft.Name)
+		return nil
+	}
+	for _, n := range []string{ft.Name, strings.ToLower(ft.Name)} {
+		if v, ok := d[n]; ok {
+			fk := fv.Kind()
+			vv := reflect.ValueOf(v)
+			if IsIntKind(fk) {
+				fv.SetInt(int64(AsInt(v)))
+			} else if IsFloatKind(fk) {
+				fv.SetFloat(AsFloat(v))
+			} else if fk == reflect.Bool {
+				fv.SetBool(AsBool(v))
+			} else if fk == reflect.String {
+				fv.SetString(AsString(v))
+			} else if fk == reflect.Struct {
+				if ft.Anonymous {
+					// TODO: ..
+				} else if vv.Kind() == reflect.Map {
+					sub := reflect.New(fv.Type())
+					this.fill(sub.Interface(), AsInterfaceMap(v), p+n+":")
+					fv.Set(sub.Elem())
+				} else {
+					return fmt.Errorf(prefix+"Cannot fill sub-struct %s (%s) from %s", n, fk, vv.Kind())
+				}
+			} else if fk == reflect.Ptr {
+				if vv.Kind() == reflect.Map {
+					sub := reflect.New(fv.Type().Elem())
+					this.fill(sub.Interface(), AsInterfaceMap(v), p+n+":")
+					fv.Set(sub)
+				} else {
+					return fmt.Errorf(prefix+"Cannot fill sub-struct ptr %s (%s) from %s", n, fk, vv.Kind())
+				}
+			} else if fk == reflect.Interface {
+				if cast, ok := this.m[fv.Type()]; !ok {
+					return fmt.Errorf(prefix+"Not found registererd cast for interface %s for %s", fv.Kind(), n)
+				} else if vv.Kind() == reflect.Map {
+					sub := reflect.New(cast(v))
+					this.fill(sub.Interface(), AsInterfaceMap(v), p+n+":")
+					fv.Set(sub)
+				} else {
+					return fmt.Errorf(prefix+"Cannot fill sub-struct ptr %s (%s) from %s", n, fk, vv.Kind())
+				}
+			} else if fk == reflect.Slice {
+				if vv.Kind() != reflect.Slice {
+					return fmt.Errorf(prefix+"Cannot fill slice %s (%s) from %s", n, fk, vv.Kind())
+				}
+				pt := ft.Type.Elem()
+				var et reflect.Type
+				if pt.Kind() == reflect.Interface {
+					if cast, ok := this.m[pt]; !ok {
+						return fmt.Errorf(prefix+"Not found registererd cast for interface %s for slice %s", fv.Kind(), n)
+					} else {
+						et = cast(v)
+					}
+				} else {
+					et = pt
+					for et.Kind() == reflect.Ptr {
+						et = et.Elem()
+					}
+				}
+				st := reflect.SliceOf(et)
+				l := fv.Len()
+				reflect.MakeSlice(st, l, l)
+				if et.Kind() == reflect.Struct {
+					if vv.Kind() != reflect.Map {
+						return fmt.Errorf(prefix+"Cannot fill slice of %s with for slice %s", et, vv.Kind(), n)
+					} else {
+						for i := 0; i < l; i++ {
+							e := reflect.New(et)
+							this.fill(e.Interface(), AsInterfaceMap(v), fmt.Sprintf("%s%s.%d:", p, n, i))
+							fv.Field(i).Set(e)
+						}
+					}
+				} else {
+					for i := 0; i < l; i++ {
+						e := reflect.New(et)
+						fv.Field(i).Set(e)
+					}
+				}
+
+				//s := reflect.MakeSlice()
+				//fv.Set(vv)
+			} else if fk == vv.Kind() {
+				fv.Set(vv)
+			} else {
+				return fmt.Errorf(prefix+"Cannot fill %s (%s) from %s", n, fk, vv.Kind())
+			}
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (this *StructFiller) fill(s interface{}, d map[string]interface{}, p string) error {
@@ -105,81 +203,13 @@ func (this *StructFiller) fill(s interface{}, d map[string]interface{}, p string
 	for i := 0; i < t.NumField(); i++ {
 		fv := r.Field(i)
 		ft := t.Field(i)
-		if !fv.CanSet() {
-			fmt.Printf("- Cannot set %s\n", ft.Name)
-			continue
-		}
-		for _, n := range []string{ft.Name, strings.ToLower(ft.Name)} {
-			if v, ok := d[n]; ok {
-				fk := fv.Kind()
-				vv := reflect.ValueOf(v)
-				if IsIntKind(fk) {
-					fv.SetInt(int64(AsInt(v)))
-				} else if IsFloatKind(fk) {
-					fv.SetFloat(AsFloat(v))
-				} else if fk == reflect.Bool {
-					fv.SetBool(AsBool(v))
-				} else if fk == reflect.String {
-					fv.SetString(AsString(v))
-				} else if fk == reflect.Struct {
-					if ft.Anonymous {
+		this.set(fv, ft, d, p, prefix)
 
-						// TODO: ..
-					} else if vv.Kind() == reflect.Map {
-						sub := reflect.New(fv.Type())
-						this.fill(sub.Interface(), AsInterfaceMap(v), p+n+":")
-						fv.Set(sub.Elem())
-					} else {
-						return fmt.Errorf(prefix+"Cannot fill sub-struct %s (%s) from %s", n, fk, vv.Kind())
-					}
-				} else if fk == reflect.Ptr {
-					if vv.Kind() == reflect.Map {
-						sub := reflect.New(fv.Type().Elem())
-						this.fill(sub.Interface(), AsInterfaceMap(v), p+n+":")
-						fv.Set(sub)
-					} else {
-						return fmt.Errorf(prefix+"Cannot fill sub-struct ptr %s (%s) from %s", n, fk, vv.Kind())
-					}
-				} else if fk == reflect.Interface {
-					if cast, ok := this.m[fv.Type()]; !ok {
-						return fmt.Errorf(prefix+"Not found registererd cast for interface %s for %s", fv.Kind(), n)
-					} else if vv.Kind() == reflect.Map {
-						sub := reflect.New(cast(v))
-						this.fill(sub.Interface(), AsInterfaceMap(v), p+n+":")
-						fv.Set(sub)
-					} else {
-						return fmt.Errorf(prefix+"Cannot fill sub-struct ptr %s (%s) from %s", n, fk, vv.Kind())
-					}
-				} else if fk == reflect.Slice {
-					if vv.Kind() != reflect.Slice {
-						return fmt.Errorf(prefix+"Cannot fill slice %s (%s) from %s", n, fk, vv.Kind())
-					}
-					st := ft.Type.Elem()
-					var sn reflect.Type
-					if st.Kind() == reflect.Interface {
-						if cast, ok := this.m[st]; !ok {
-							return fmt.Errorf(prefix+"Not found registererd cast for interface %s for slice %s", fv.Kind(), n)
-						} else {
-							sn = cast(v)
-						}
-					}/* else if reflect {
-						// TODO: ..
-					}*/
-					fmt.Printf("Slice type: %s", ft.Type.Elem().Kind())
-					//s := reflect.MakeSlice()
-					//fv.Set(vv)
-				} else if fk == vv.Kind() {
-					fv.Set(vv)
-				} else {
-					return fmt.Errorf(prefix+"Cannot fill %s (%s) from %s", n, fk, vv.Kind())
-				}
-				continue
-			}
-		}
 	}
 	return nil
 }
 
+// Fill takes map and populates the struct..
 func (this *StructFiller) Fill(s interface{}, d map[string]interface{}) error {
 	return this.fill(s, d, "")
 }
