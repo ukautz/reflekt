@@ -15,6 +15,11 @@ var testsInt = []struct {
 	to        int
 }{
 	{
+		from:      nil,
+		recognize: false,
+		to:        0,
+	},
+	{
 		from:      int(123),
 		recognize: true,
 		to:        123,
@@ -149,8 +154,7 @@ var testsInt = []struct {
 func TestIsInt(t *testing.T) {
 	Convey("Determine whether value is int", t, func() {
 		for _, test := range testsInt {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("From %s (%v) expected %v", r.Type().String(), test.from, test.recognize), func() {
+			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.recognize), func() {
 				So(test.recognize, ShouldEqual, IsInt(test.from))
 			})
 		}
@@ -160,8 +164,7 @@ func TestIsInt(t *testing.T) {
 func TestAsInt(t *testing.T) {
 	Convey("Try casting any value to int", t, func() {
 		for _, test := range testsInt {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("From %s (%v) expected %d", r.Type().String(), test.from, test.to), func() {
+			Convey(fmt.Sprintf("From %s (%v) expected %d", typeName(test.from), test.from, test.to), func() {
 				So(test.to, ShouldEqual, AsInt(test.from))
 			})
 		}
@@ -173,6 +176,11 @@ var testsFloat = []struct {
 	recognize bool
 	to        float64
 }{
+	{
+		from:      nil,
+		recognize: false,
+		to:        float64(0),
+	},
 	{
 		from:      int(123),
 		recognize: false,
@@ -283,8 +291,7 @@ var testsFloat = []struct {
 func TestIsFloat(t *testing.T) {
 	Convey("Determine whether value is float", t, func() {
 		for _, test := range testsFloat {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("From %s (%v) expected %v", r.Type().String(), test.from, test.recognize), func() {
+			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.recognize), func() {
 				So(test.recognize, ShouldEqual, IsFloat(test.from))
 			})
 		}
@@ -294,8 +301,7 @@ func TestIsFloat(t *testing.T) {
 func TestAsFloat(t *testing.T) {
 	Convey("Try casting any value to float", t, func() {
 		for _, test := range testsFloat {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("From %s (%v) expected %v", r.Type().String(), test.from, test.to), func() {
+			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.to), func() {
 				So(fmt.Sprintf(`%0.3f`, test.to), ShouldEqual, fmt.Sprintf(`%0.3f`, AsFloat(test.from)))
 			})
 		}
@@ -306,6 +312,10 @@ var testsBool = []struct {
 	from interface{}
 	to   bool
 }{
+	{
+		from: nil,
+		to:   false,
+	},
 	{
 		from: 1,
 		to:   true,
@@ -383,8 +393,7 @@ var testsBool = []struct {
 func TestAsBool(t *testing.T) {
 	Convey("Try casting any value to bool", t, func() {
 		for _, test := range testsBool {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("From %s (%v) expected %v", r.Type().String(), test.from, test.to), func() {
+			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.to), func() {
 				So(test.to, ShouldEqual, AsBool(test.from))
 			})
 		}
@@ -395,6 +404,10 @@ var testsString = []struct {
 	from interface{}
 	to   string
 }{
+	{
+		from: nil,
+		to:   "",
+	},
 	{
 		from: 1,
 		to:   "1",
@@ -440,8 +453,7 @@ var testsString = []struct {
 func TestAsString(t *testing.T) {
 	Convey("Try casting any value to string", t, func() {
 		for _, test := range testsString {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("From %s (%v) expected %v", r.Type().String(), test.from, test.to), func() {
+			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.to), func() {
 				So(AsString(test.from), ShouldEqual, test.to)
 			})
 		}
@@ -452,6 +464,10 @@ var testsIntMap = []struct {
 	from interface{}
 	to   map[string]int
 }{
+	{
+		from: nil,
+		to:   nil,
+	},
 	{
 		from: 1,
 		to:   map[string]int{},
@@ -477,8 +493,7 @@ var testsIntMap = []struct {
 func TestAsIntMap(t *testing.T) {
 	Convey("Try casting any map to map[string]int", t, func() {
 		for idx, test := range testsIntMap {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+			Convey(fmt.Sprintf("%d) From %s", idx, typeName(test.from)), func() {
 				So(AsIntMap(test.from), ShouldResemble, test.to)
 			})
 		}
@@ -489,6 +504,10 @@ var testsFloatMap = []struct {
 	from interface{}
 	to   map[string]float64
 }{
+	{
+		from: nil,
+		to:   nil,
+	},
 	{
 		from: 1,
 		to:   map[string]float64{},
@@ -514,8 +533,7 @@ var testsFloatMap = []struct {
 func TestAsFloatMap(t *testing.T) {
 	Convey("Try casting any map to map[string]float64", t, func() {
 		for idx, test := range testsFloatMap {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+			Convey(fmt.Sprintf("%d) From %s", idx, typeName(test.from)), func() {
 				So(AsFloatMap(test.from), ShouldResemble, test.to)
 			})
 		}
@@ -526,6 +544,10 @@ var testsBoolMap = []struct {
 	from interface{}
 	to   map[string]bool
 }{
+	{
+		from: nil,
+		to:   nil,
+	},
 	{
 		from: 1,
 		to:   map[string]bool{},
@@ -555,8 +577,7 @@ var testsBoolMap = []struct {
 func TestAsBoolMap(t *testing.T) {
 	Convey("Try casting any map to map[string]bool", t, func() {
 		for idx, test := range testsBoolMap {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+			Convey(fmt.Sprintf("%d) From %s", idx, typeName(test.from)), func() {
 				So(AsBoolMap(test.from), ShouldResemble, test.to)
 			})
 		}
@@ -567,6 +588,10 @@ var testsStringMap = []struct {
 	from interface{}
 	to   map[string]string
 }{
+	{
+		from: nil,
+		to:   nil,
+	},
 	{
 		from: 1,
 		to:   map[string]string{},
@@ -596,8 +621,7 @@ var testsStringMap = []struct {
 func TestAsStringMap(t *testing.T) {
 	Convey("Try casting any map to map[string]string", t, func() {
 		for idx, test := range testsStringMap {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+			Convey(fmt.Sprintf("%d) From %s", idx, typeName(test.from)), func() {
 				So(AsStringMap(test.from), ShouldResemble, test.to)
 			})
 		}
@@ -608,6 +632,10 @@ var testsInterfaceMap = []struct {
 	from interface{}
 	to   map[string]interface{}
 }{
+	{
+		from: nil,
+		to:   nil,
+	},
 	{
 		from: 1,
 		to:   map[string]interface{}{},
@@ -621,8 +649,7 @@ var testsInterfaceMap = []struct {
 func TestAsInterfaceMap(t *testing.T) {
 	Convey("Try casting any map to map[string]interface{}", t, func() {
 		for idx, test := range testsInterfaceMap {
-			r := reflect.ValueOf(test.from)
-			Convey(fmt.Sprintf("%d) From %s", idx, r.Type().String()), func() {
+			Convey(fmt.Sprintf("%d) From %s", idx, typeName(test.from)), func() {
 				So(AsInterfaceMap(test.from), ShouldResemble, test.to)
 			})
 		}
@@ -642,7 +669,7 @@ func serializeMap(v interface{}) string {
 		keys = append(keys, kv)
 		orig[kv] = k
 	}
-	
+
 	sort.Strings(keys)
 
 	out := []string{}
@@ -651,4 +678,12 @@ func serializeMap(v interface{}) string {
 	}
 
 	return fmt.Sprintf("%s{%s}", r.Type(), strings.Join(out, ", "))
+}
+
+func typeName(v interface{}) string {
+	if v == nil {
+		return "nil"
+	} else {
+		return reflect.TypeOf(v).String()
+	}
 }

@@ -43,17 +43,20 @@ func IsFloat(v interface{}) bool {
 	default:
 		k = reflect.ValueOf(v).Kind()
 	}
-	
+
 	return IsFloatKind(k)
 }
 
 // AsInt tries to return or convert the value from anything to int
 func AsInt(v interface{}) int {
+	if v == nil {
+		return 0
+	}
+
 	r := reflect.ValueOf(v)
 	if r.Type().String() == `reflect.Value` {
 		r = v.(reflect.Value)
 	}
-
 
 	k := r.Kind()
 	switch {
@@ -92,6 +95,10 @@ func AsInt(v interface{}) int {
 
 // AsFloat tries to return or convert the value from anything to float64
 func AsFloat(v interface{}) float64 {
+	if v == nil {
+		return float64(0)
+	}
+
 	r := reflect.ValueOf(v)
 	if r.Type().String() == `reflect.Value` {
 		r = v.(reflect.Value)
@@ -119,6 +126,10 @@ func AsFloat(v interface{}) float64 {
 
 // AsBool tries to return or convert the value from anything to bool
 func AsBool(v interface{}) bool {
+	if v == nil {
+		return false
+	}
+
 	r := reflect.ValueOf(v)
 	if r.Type().String() == `reflect.Value` {
 		r = v.(reflect.Value)
@@ -142,6 +153,10 @@ func AsBool(v interface{}) bool {
 
 // AsString tries to return or convert the value from anything to string
 func AsString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+
 	r := reflect.ValueOf(v)
 	if r.Type().String() == `reflect.Value` {
 		r = v.(reflect.Value)
@@ -179,6 +194,9 @@ func AsMap(v interface{}, key reflect.Type, val reflect.Type, add func(to reflec
 // AsIntMap tries to return any map[interface{}]interface{} as map[string]int.
 // Returns nil if v is not a map
 func AsIntMap(v interface{}) map[string]int {
+	if v == nil {
+		return nil
+	}
 	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(0), func(to reflect.Value, key reflect.Value, val reflect.Value) {
 		k := reflect.ValueOf(AsString(key))
 		v := reflect.ValueOf(AsInt(val))
@@ -190,6 +208,9 @@ func AsIntMap(v interface{}) map[string]int {
 // AsFloatMap tries to return any map[interface{}]interface{} as map[string]float.
 // Returns nil if v is not a map
 func AsFloatMap(v interface{}) map[string]float64 {
+	if v == nil {
+		return nil
+	}
 	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(0.0), func(to reflect.Value, key reflect.Value, val reflect.Value) {
 		k := reflect.ValueOf(AsString(key))
 		v := reflect.ValueOf(AsFloat(val))
@@ -201,6 +222,9 @@ func AsFloatMap(v interface{}) map[string]float64 {
 // AsBoolMap tries to return any map[interface{}]interface{} as map[string]bool.
 // Returns nil if v is not a map
 func AsBoolMap(v interface{}) map[string]bool {
+	if v == nil {
+		return nil
+	}
 	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(true), func(to reflect.Value, key reflect.Value, val reflect.Value) {
 		k := reflect.ValueOf(AsString(key))
 		v := reflect.ValueOf(AsBool(val))
@@ -212,6 +236,9 @@ func AsBoolMap(v interface{}) map[string]bool {
 // AsStringMap tries to return any map[interface{}]interface{} as map[string]string.
 // Returns nil if v is not a map
 func AsStringMap(v interface{}) map[string]string {
+	if v == nil {
+		return nil
+	}
 	m := AsMap(v, reflect.TypeOf(""), reflect.TypeOf(""), func(to reflect.Value, key reflect.Value, val reflect.Value) {
 		k := reflect.ValueOf(AsString(key))
 		v := reflect.ValueOf(AsString(val))
@@ -223,6 +250,9 @@ func AsStringMap(v interface{}) map[string]string {
 // AsInterfaceMap tries to return any map[interface{}]interface{} as map[string]interface{}.
 // Returns nil if v is not a map
 func AsInterfaceMap(v interface{}) map[string]interface{} {
+	if v == nil {
+		return nil
+	}
 	i := reflect.TypeOf((*interface{})(nil)).Elem()
 	m := AsMap(v, reflect.TypeOf(""), i, func(to reflect.Value, key reflect.Value, val reflect.Value) {
 		k := reflect.ValueOf(AsString(key))
