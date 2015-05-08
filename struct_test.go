@@ -1,8 +1,8 @@
 package reflekt
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"fmt"
+	. "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"testing"
 )
@@ -124,7 +124,7 @@ var testsStructAsMap = []struct {
 		},
 		to: map[string]interface{}{
 			"Foo": "foo",
-			"J": "j",
+			"J":   "j",
 		},
 	},
 }
@@ -141,6 +141,7 @@ func TestStructAsMap(t *testing.T) {
 }
 
 func TestFillStruct(t *testing.T) {
+	t.Skip("Still working on that")
 	Convey("Try filling struct from map[string]interface{}", t, func() {
 		for idx, test := range testsStructAsMap {
 			if idx != 5 {

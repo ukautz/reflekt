@@ -28,7 +28,7 @@ func structElemAs(f reflect.Value, lc bool, m map[string]interface{}) interface{
 	}
 }
 
-func structAsMap(v interface{}, lc bool, res map[string]interface{}) map[string]interface{} {
+func structAsMap(v interface{}, sc bool, res map[string]interface{}) map[string]interface{} {
 	if res == nil {
 		res = make(map[string]interface{})
 	}
@@ -44,14 +44,17 @@ func structAsMap(v interface{}, lc bool, res map[string]interface{}) map[string]
 		for i := 0; i < r.NumField(); i++ {
 			fv := r.Field(i)
 			ft := t.Field(i)
+			if ft.PkgPath != "" {
+				continue
+			}
 			n := ft.Name
-			if lc {
-				n = strings.ToLower(n)
+			if sc {
+				n = snakeCase(n)
 			}
 			if fv.Kind() == reflect.Struct && ft.Anonymous {
-				structAsMap(fv.Interface(), lc, res)
+				structAsMap(fv.Interface(), sc, res)
 			} else {
-				res[n] = structElemAs(fv, lc, nil)
+				res[n] = structElemAs(fv, sc, nil)
 			}
 		}
 	}
@@ -59,8 +62,8 @@ func structAsMap(v interface{}, lc bool, res map[string]interface{}) map[string]
 }
 
 // StructAsMap converts given struct into `map[string]interface{}`
-func StructAsMap(v interface{}, lowerCase ...bool) map[string]interface{} {
-	return structAsMap(v, len(lowerCase) > 0 && lowerCase[0], nil)
+func StructAsMap(v interface{}, snakeCase ...bool) map[string]interface{} {
+	return structAsMap(v, len(snakeCase) > 0 && snakeCase[0], nil)
 }
 
 // StructFiller is going to be an awesome tool to simply fill structs from maps (thereby JSON and all that).. just not yet
