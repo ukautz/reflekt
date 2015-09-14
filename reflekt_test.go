@@ -13,148 +13,194 @@ var testsInt = []struct {
 	from      interface{}
 	recognize bool
 	to        int
+	toSlice   []int
 }{
 	{
 		from:      nil,
 		recognize: false,
 		to:        0,
+		toSlice:   []int{},
 	},
 	{
 		from:      int(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      int8(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      int16(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      int32(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      int64(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      uint(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      uint8(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      uint16(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      uint32(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      uint64(123),
 		recognize: true,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      float64(123.123),
 		recognize: false,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      float32(123.123),
 		recognize: false,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      true,
 		recognize: false,
 		to:        1,
+		toSlice:   []int{1},
 	},
 	{
 		from:      false,
 		recognize: false,
 		to:        0,
+		toSlice:   []int{0},
 	},
 	{
 		from:      "123",
 		recognize: false,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      "-123",
 		recognize: false,
 		to:        -123,
+		toSlice:   []int{-123},
 	},
 	{
 		from:      "123.345",
 		recognize: false,
 		to:        123,
+		toSlice:   []int{123},
 	},
 	{
 		from:      "true",
 		recognize: false,
 		to:        1,
+		toSlice:   []int{1},
 	},
 	{
 		from:      "TRUE",
 		recognize: false,
 		to:        1,
+		toSlice:   []int{1},
 	},
 	{
 		from:      "false",
 		recognize: false,
 		to:        0,
+		toSlice:   []int{0},
 	},
 	{
 		from:      reflect.ValueOf(6),
 		recognize: true,
 		to:        6,
+		toSlice:   []int{6},
 	},
 	{
 		from:      reflect.ValueOf(6.3),
 		recognize: false,
 		to:        6,
+		toSlice:   []int{6},
 	},
 	{
 		from:      reflect.ValueOf("6.3"),
 		recognize: false,
 		to:        6,
+		toSlice:   []int{6},
 	},
 	{
 		from:      "foo",
 		recognize: false,
 		to:        0,
+		toSlice:   []int{0},
 	},
 	{
 		from:      map[string]interface{}{},
 		recognize: false,
 		to:        0,
+		toSlice:   []int{0},
+	},
+	{
+		from:      []bool{true, false, true},
+		recognize: false,
+		to:        int(0),
+		toSlice:   []int{1, 0, 1},
 	},
 	{
 		from:      []int{1, 2, 3},
 		recognize: false,
 		to:        0,
+		toSlice:   []int{1, 2, 3},
+	},
+	{
+		from:      []float64{1.1, 2.2, 3.3},
+		recognize: false,
+		to:        0,
+		toSlice:   []int{1, 2, 3},
+	},
+	{
+		from:      []string{"1", "2", "3"},
+		recognize: false,
+		to:        0,
+		toSlice:   []int{1, 2, 3},
 	},
 }
 
 func TestIsInt(t *testing.T) {
 	Convey("Determine whether value is int", t, func() {
-		for _, test := range testsInt {
-			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.recognize), func() {
+		for i, test := range testsInt {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v (is int)", i, typeName(test.from), test.from, test.recognize), func() {
 				So(test.recognize, ShouldEqual, IsInt(test.from))
 			})
 		}
@@ -163,9 +209,19 @@ func TestIsInt(t *testing.T) {
 
 func TestAsInt(t *testing.T) {
 	Convey("Try casting any value to int", t, func() {
-		for _, test := range testsInt {
-			Convey(fmt.Sprintf("From %s (%v) expected %d", typeName(test.from), test.from, test.to), func() {
+		for i, test := range testsInt {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %d (as int)", i, typeName(test.from), test.from, test.to), func() {
 				So(test.to, ShouldEqual, AsInt(test.from))
+			})
+		}
+	})
+}
+
+func TestAsInts(t *testing.T) {
+	Convey("Try casting any value to slice of ints", t, func() {
+		for i, test := range testsInt {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v (as ints)", i, typeName(test.from), test.from, test.toSlice), func() {
+				So(test.toSlice, ShouldResemble, AsInts(test.from))
 			})
 		}
 	})
@@ -175,91 +231,109 @@ var testsFloat = []struct {
 	from      interface{}
 	recognize bool
 	to        float64
+	toSlice   []float64
 }{
 	{
 		from:      nil,
 		recognize: false,
 		to:        float64(0),
+		toSlice:   []float64{},
 	},
 	{
 		from:      int(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      int8(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      int16(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      int32(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      int64(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      uint(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      uint8(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      uint16(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      uint32(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      uint64(123),
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      float64(123.123),
 		recognize: true,
 		to:        float64(123.123),
+		toSlice:   []float64{123.123},
 	},
 	{
 		from:      float32(123.123),
 		recognize: true,
 		to:        float64(123.123),
+		toSlice:   []float64{123.123},
 	},
 	{
 		from:      "123",
 		recognize: false,
 		to:        float64(123.0),
+		toSlice:   []float64{123.0},
 	},
 	{
 		from:      "-123",
 		recognize: false,
 		to:        float64(-123.0),
+		toSlice:   []float64{-123.0},
 	},
 	{
 		from:      "123.345",
 		recognize: false,
 		to:        float64(123.345),
+		toSlice:   []float64{123.345},
 	},
 	{
 		from:      reflect.ValueOf(6),
 		recognize: false,
 		to:        float64(6.0),
+		toSlice:   []float64{6.0},
 	},
 	{
 		from:      reflect.ValueOf(6.3),
@@ -270,28 +344,50 @@ var testsFloat = []struct {
 		from:      reflect.ValueOf("6.3"),
 		recognize: false,
 		to:        float64(6.3),
+		toSlice:   []float64{6.3},
 	},
 	{
 		from:      "foo",
 		recognize: false,
 		to:        float64(0),
+		toSlice:   []float64{0},
 	},
 	{
 		from:      map[string]interface{}{},
 		recognize: false,
 		to:        float64(0),
+		toSlice:   []float64{0},
+	},
+	{
+		from:      []bool{true, false, true},
+		recognize: false,
+		to:        float64(0),
+		toSlice:   []float64{1, 0, 1},
 	},
 	{
 		from:      []int{1, 2, 3},
 		recognize: false,
 		to:        float64(0),
+		toSlice:   []float64{1, 2, 3},
+	},
+	{
+		from:      []float64{1.1, 2.2, 3.3},
+		recognize: false,
+		to:        0,
+		toSlice:   []float64{1.1, 2.2, 3.3},
+	},
+	{
+		from:      []string{"1", "2", "3"},
+		recognize: false,
+		to:        0,
+		toSlice:   []float64{1, 2, 3},
 	},
 }
 
 func TestIsFloat(t *testing.T) {
 	Convey("Determine whether value is float", t, func() {
-		for _, test := range testsFloat {
-			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.recognize), func() {
+		for i, test := range testsFloat {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.recognize), func() {
 				So(test.recognize, ShouldEqual, IsFloat(test.from))
 			})
 		}
@@ -300,8 +396,18 @@ func TestIsFloat(t *testing.T) {
 
 func TestAsFloat(t *testing.T) {
 	Convey("Try casting any value to float", t, func() {
-		for _, test := range testsFloat {
-			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.to), func() {
+		for i, test := range testsFloat {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.to), func() {
+				So(fmt.Sprintf(`%0.3f`, test.to), ShouldEqual, fmt.Sprintf(`%0.3f`, AsFloat(test.from)))
+			})
+		}
+	})
+}
+
+func TestAsFloats(t *testing.T) {
+	Convey("Try casting any value to slice of floats", t, func() {
+		for i, test := range testsFloat {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.to), func() {
 				So(fmt.Sprintf(`%0.3f`, test.to), ShouldEqual, fmt.Sprintf(`%0.3f`, AsFloat(test.from)))
 			})
 		}
@@ -309,91 +415,141 @@ func TestAsFloat(t *testing.T) {
 }
 
 var testsBool = []struct {
-	from interface{}
-	to   bool
+	from    interface{}
+	to      bool
+	toSlice []bool
 }{
 	{
-		from: nil,
-		to:   false,
+		from:    nil,
+		to:      false,
+		toSlice: []bool{},
 	},
 	{
-		from: 1,
-		to:   true,
+		from:    1,
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: 1.1,
-		to:   true,
+		from:    1.1,
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: uint(1),
-		to:   true,
+		from:    uint(1),
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: "true",
-		to:   true,
+		from:    "true",
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: "TRUE",
-		to:   true,
+		from:    "TRUE",
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: true,
-		to:   true,
+		from:    true,
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: "1",
-		to:   true,
+		from:    "1",
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: reflect.ValueOf(true),
-		to:   true,
+		from:    reflect.ValueOf(true),
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: reflect.ValueOf("1"),
-		to:   true,
+		from:    reflect.ValueOf("1"),
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: reflect.ValueOf(1),
-		to:   true,
+		from:    reflect.ValueOf(1),
+		to:      true,
+		toSlice: []bool{true},
 	},
 	{
-		from: 0,
-		to:   false,
+		from:    0,
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: float64(0.0),
-		to:   false,
+		from:    float64(0.0),
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: uint(0),
-		to:   false,
+		from:    uint(0),
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: "false",
-		to:   false,
+		from:    "false",
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: "FALSE",
-		to:   false,
+		from:    "FALSE",
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: false,
-		to:   false,
+		from:    false,
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: "0",
-		to:   false,
+		from:    "0",
+		to:      false,
+		toSlice: []bool{false},
 	},
 	{
-		from: reflect.ValueOf(false),
-		to:   false,
+		from:    reflect.ValueOf(false),
+		to:      false,
+		toSlice: []bool{false},
+	},
+	{
+		from:    []bool{true, false, true},
+		to:      false,
+		toSlice: []bool{true, false, true},
+	},
+	{
+		from:    []int{1, 0, 1},
+		to:      false,
+		toSlice: []bool{true, false, true},
+	},
+	{
+		from:    []float64{1.1, 0.0, 2.2},
+		to:      false,
+		toSlice: []bool{true, false, true},
+	},
+	{
+		from:    []string{"1", "0", "TRUE"},
+		to:      false,
+		toSlice: []bool{true, false, true},
 	},
 }
 
 func TestAsBool(t *testing.T) {
 	Convey("Try casting any value to bool", t, func() {
-		for _, test := range testsBool {
-			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.to), func() {
+		for i, test := range testsBool {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.to), func() {
+				So(test.to, ShouldEqual, AsBool(test.from))
+			})
+		}
+	})
+}
+
+func TestAsBools(t *testing.T) {
+	Convey("Try casting any value to slice of bools", t, func() {
+		for i, test := range testsBool {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.to), func() {
 				So(test.to, ShouldEqual, AsBool(test.from))
 			})
 		}
@@ -401,59 +557,101 @@ func TestAsBool(t *testing.T) {
 }
 
 var testsString = []struct {
-	from interface{}
-	to   string
+	from    interface{}
+	to      string
+	toSlice []string
 }{
 	{
-		from: nil,
-		to:   "",
+		from:    nil,
+		to:      "",
+		toSlice: []string{},
 	},
 	{
-		from: 1,
-		to:   "1",
+		from:    1,
+		to:      "1",
+		toSlice: []string{"1"},
 	},
 	{
-		from: 1.1,
-		to:   "1.1",
+		from:    1.1,
+		to:      "1.1",
+		toSlice: []string{"1.1"},
 	},
 	{
-		from: uint(1),
-		to:   "1",
+		from:    uint(1),
+		to:      "1",
+		toSlice: []string{"1"},
 	},
 	{
-		from: true,
-		to:   "true",
+		from:    true,
+		to:      "true",
+		toSlice: []string{"true"},
 	},
 	{
-		from: false,
-		to:   "false",
+		from:    false,
+		to:      "false",
+		toSlice: []string{"false"},
 	},
 	{
-		from: "foo",
-		to:   "foo",
+		from:    "foo",
+		to:      "foo",
+		toSlice: []string{"foo"},
 	},
 	{
-		from: reflect.ValueOf("foo"),
-		to:   "foo",
+		from:    reflect.ValueOf("foo"),
+		to:      "foo",
+		toSlice: []string{"foo"},
 	},
 	{
-		from: reflect.ValueOf(123),
-		to:   "123",
+		from:    reflect.ValueOf(123),
+		to:      "123",
+		toSlice: []string{"123"},
 	},
 	{
-		from: reflect.ValueOf(true),
-		to:   "true",
+		from:    reflect.ValueOf(true),
+		to:      "true",
+		toSlice: []string{"true"},
 	},
 	{
-		from: map[string]interface{}{"foo": "bar"},
-		to:   "",
+		from:    map[string]interface{}{"foo": "bar"},
+		to:      "",
+		toSlice: []string{""},
+	},
+	{
+		from:    []bool{true, false},
+		to:      "",
+		toSlice: []string{"true", "false"},
+	},
+	{
+		from:    []int{1, 2, 3},
+		to:      "",
+		toSlice: []string{"1", "2", "3"},
+	},
+	{
+		from:    []float64{1.1, 2.2, 3.3},
+		to:      "",
+		toSlice: []string{"1.1", "2.2", "3.3"},
+	},
+	{
+		from:    []string{"foo", "bar"},
+		to:      "",
+		toSlice: []string{"foo", "bar"},
 	},
 }
 
 func TestAsString(t *testing.T) {
 	Convey("Try casting any value to string", t, func() {
-		for _, test := range testsString {
-			Convey(fmt.Sprintf("From %s (%v) expected %v", typeName(test.from), test.from, test.to), func() {
+		for i, test := range testsString {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.to), func() {
+				So(AsString(test.from), ShouldEqual, test.to)
+			})
+		}
+	})
+}
+
+func TestAsStrings(t *testing.T) {
+	Convey("Try casting any value to slice of strings", t, func() {
+		for i, test := range testsString {
+			Convey(fmt.Sprintf("%d) From %s (%v) expected %v", i, typeName(test.from), test.from, test.to), func() {
 				So(AsString(test.from), ShouldEqual, test.to)
 			})
 		}

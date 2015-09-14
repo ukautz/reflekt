@@ -47,6 +47,22 @@ func IsFloat(v interface{}) bool {
 	return IsFloatKind(k)
 }
 
+// AsInterfaces returns value as array of interfaces. If value is not a slice, then the returned result
+// will have the length of 1
+func AsInterfaces(v interface{}) []interface{} {
+	ref := reflect.ValueOf(v)
+	if ref.Kind() == reflect.Invalid {
+		return []interface{}{}
+	} else if ref.Kind() != reflect.Slice {
+		return []interface{}{ref.Interface()}
+	}
+	res := make([]interface{}, ref.Len())
+	for i := 0; i < ref.Len(); i++ {
+		res[i] = ref.Index(i).Interface()
+	}
+	return res
+}
+
 // AsInt tries to return or convert the value from anything to int
 func AsInt(v interface{}) int {
 	if v == nil {
@@ -93,6 +109,16 @@ func AsInt(v interface{}) int {
 	}
 }
 
+// AsInts returns value as array of ints. If value is not a slice, then the returned result will have the length of 1.
+func AsInts(v interface{}) []int {
+	vs := AsInterfaces(v)
+	res := make([]int, len(vs))
+	for i, vv := range vs {
+		res[i] = AsInt(vv)
+	}
+	return res
+}
+
 // AsFloat tries to return or convert the value from anything to float64
 func AsFloat(v interface{}) float64 {
 	if v == nil {
@@ -124,6 +150,16 @@ func AsFloat(v interface{}) float64 {
 	}
 }
 
+// AsFloats returns value as array of float64. If value is not a slice, then the returned result will have the length of 1.
+func AsFloats(v interface{}) []float64 {
+	vs := AsInterfaces(v)
+	res := make([]float64, len(vs))
+	for i, vv := range vs {
+		res[i] = AsFloat(vv)
+	}
+	return res
+}
+
 // AsBool tries to return or convert the value from anything to bool
 func AsBool(v interface{}) bool {
 	if v == nil {
@@ -151,6 +187,16 @@ func AsBool(v interface{}) bool {
 	}
 }
 
+// AsBools returns value as array of bool. If value is not a slice, then the returned result will have the length of 1.
+func AsBools(v interface{}) []bool {
+	vs := AsInterfaces(v)
+	res := make([]bool, len(vs))
+	for i, vv := range vs {
+		res[i] = AsBool(vv)
+	}
+	return res
+}
+
 // AsString tries to return or convert the value from anything to string
 func AsString(v interface{}) string {
 	if v == nil {
@@ -176,6 +222,16 @@ func AsString(v interface{}) string {
 	default:
 		return ""
 	}
+}
+
+// AsStrings returns value as array of strings. If value is not a slice, then the returned result will have the length of 1.
+func AsStrings(v interface{}) []string {
+	vs := AsInterfaces(v)
+	res := make([]string, len(vs))
+	for i, vv := range vs {
+		res[i] = AsString(vv)
+	}
+	return res
 }
 
 // AsMap converts given map into other map
