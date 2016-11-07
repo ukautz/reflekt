@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/ukautz/reflekt.svg?branch=v3)](https://travis-ci.org/ukautz/reflekt)
 
+
 reflekt
 =======
 
@@ -11,19 +12,24 @@ Installation
 ------------
 
 ```bash
-$ go get 
+$ go get gopkg.in/ukautz/reflekt.v2
+```
+
 
 Documentation
 -------------
 
 GoDoc can be [found here](http://godoc.org/github.com/ukautz/reflekt)
 
+
 Examples
 --------
 
 Determine whether anything is of a primitive type. 
 
-``` go
+```go
+import "gopkg.in/ukautz/reflekt.v2"
+
 if reflekt.IsInt(v) {
     fmt.Printf("Yes, %d is a native integer type", v)
 } else if reflekt.IsFloat(v) {
@@ -33,8 +39,11 @@ if reflekt.IsInt(v) {
 
 (Try) Cast given value into respective type (tries to exhaust all possibilities):
 
+### Casting scalars
 
 ``` go
+import "gopkg.in/ukautz/reflekt.v2"
+
 si := "1.2"
 ii := 1
 fi := 1.2
@@ -42,22 +51,24 @@ bi := true
 
 // always as int
 var i int
-i = AsInt(si) // 1
-i = AsInt(ii) // 1
-i = AsInt(fi) // 1
-i = AsInt(bi) // 1
+i = reflekt.AsInt(si) // 1
+i = reflekt.AsInt(ii) // 1
+i = reflekt.AsInt(fi) // 1
+i = reflekt.AsInt(bi) // 1
 
 // always as float
 var f float64
-f = AsFloat(si) // 1.2
-f = AsFloat(ii) // 1.0
-f = AsFloat(fi) // 1.2
+f = reflekt.AsFloat(si) // 1.2
+f = reflekt.AsFloat(ii) // 1.0
+f = reflekt.AsFloat(fi) // 1.2
+f = reflekt.AsFloat(bi) // 1.0
 
 // always as string
 var s string
-s = AsString(si) // "1.2"
-s = AsString(ii) // "1"
-s = AsString(fi) // "1.200000"
+s = reflekt.AsString(si) // "1.2"
+s = reflekt.AsString(ii) // "1"
+s = reflekt.AsString(fi) // "1.200000"
+f = reflekt.AsString(bi) // "true"
 
 // always as bool
 bi := 1
@@ -66,16 +77,47 @@ bs1 := "true" // see strconv.ParseBool
 bs2 := "True" // see strconv.ParseBool
 bs3 := "TRUE" // see strconv.ParseBool
 var b bool
-b = AsBool(bi)  // true
-b = AsBool(bb)  // true
-b = AsBool(bs1) // true
-b = AsBool(bs2) // true
-b = AsBool(bs3) // true
+b = reflekt.AsBool(bi)  // true
+b = reflekt.AsBool(bb)  // true
+b = reflekt.AsBool(bs1) // true
+b = reflekt.AsBool(bs2) // true
+b = reflekt.AsBool(bs3) // true
+```
+
+### Casting maps
+
+```go
+import "gopkg.in/ukautz/reflekt.v2"
 
 // object oriented
-v := NewValue(1)
-v.String() // == "1"
-v.Float() // == float64(1)
-v.Bool() // == true
+m := map[string]interface{}{"foo": 1}
+reflekt.AsIntMap(m) // map[string]int{"foo":1}
+reflekt.AsFloatMap(m) // map[string]float64{"foo":1}
+reflekt.AsBoolMap(m) // map[string]bool{"foo":true}
+reflekt.AsStringMap(m) // map[string]string{"foo":"1"}
+```
 
+### Using OO interface
+
+```go
+import "gopkg.in/ukautz/reflekt.v2"
+
+// object oriented
+v := reflekt.NewValue(1.23)
+v.String() // == "1.23"
+v.Strings() // == []string{"1.23"}
+v.Int() // == int(1)
+v.Ints() // == []int{1}
+v.Float() // == float64(1.23)
+v.Floats() // == []float64{1.23}
+v.Bool() // == true
+v.Bools() // == []bool{true}
+
+// OO with maps
+v := reflekt.NewValue(map[interface{}]interface{}{"foo": 1.23})
+v.InterfaceMap() // map[string]interface{}{"foo": 1.23}
+v.IntMap() // map[string]int{"foo": 1}
+v.FloatMap() // map[string]float64{"foo": 1.23}
+v.BoolMap() // map[string]bool{"foo": true}
+v.StringMap() // map[string]string{"foo": "1.23"}
 ```
