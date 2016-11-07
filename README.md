@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ukautz/reflekt.svg?branch=master)](https://travis-ci.org/ukautz/reflekt)
+[![Build Status](https://travis-ci.org/ukautz/reflekt.svg?branch=v3)](https://travis-ci.org/ukautz/reflekt)
 
 reflekt
 =======
@@ -6,7 +6,12 @@ reflekt
 This package provides lazy developers shorthands for determining or casting
 (to) primitive Go types.
 
-My use is mainly in the context of parsing non-uniform data.
+
+Installation
+------------
+
+```bash
+$ go get 
 
 Documentation
 -------------
@@ -66,5 +71,11 @@ b = AsBool(bb)  // true
 b = AsBool(bs1) // true
 b = AsBool(bs2) // true
 b = AsBool(bs3) // true
+
+// object oriented
+v := NewValue(1)
+v.String() // == "1"
+v.Float() // == float64(1)
+v.Bool() // == true
 
 ```
