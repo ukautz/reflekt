@@ -9,3 +9,7 @@ testImport:
   version: ~1.0.0
   subpackages:
   - spew
+- package: gopkg.in/vmihailenco/msgpack.v2
+  version: ^2.7.3
+- package: github.com/jtolds/gls
+  version: ^4.2.0

@@ -1,13 +1,36 @@
 package reflekt
 
+import (
+	"reflect"
+	"github.com/davecgh/go-spew/spew"
+)
+
 type (
 	Value struct {
 		v interface{}
+		r *reflect.Value
 	}
 )
 
 func NewValue(v interface{}) *Value {
-	return &Value{v}
+	return &Value{v: v}
+}
+
+func (this *Value) Dump() string {
+	return spew.Sdump(this.v)
+}
+
+func (this *Value) Set(v interface{}) {
+	this.v = v
+	this.r = nil
+}
+
+func (this *Value) Reflect() *reflect.Value {
+	if this.r == nil {
+		r := reflect.ValueOf(this.v)
+		this.r = &r
+	}
+	return this.r
 }
 
 func (this *Value) Interface() interface{} {
