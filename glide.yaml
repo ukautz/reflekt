@@ -2,14 +2,10 @@ package: github.com/ukautz/reflekt
 import: []
 testImport:
 - package: github.com/smartystreets/goconvey
-  version: ~1.6.2
   subpackages:
   - convey
 - package: github.com/davecgh/go-spew
-  version: ~1.0.0
   subpackages:
   - spew
 - package: gopkg.in/vmihailenco/msgpack.v2
-  version: ^2.7.3
 - package: github.com/jtolds/gls
-  version: ^4.2.0
