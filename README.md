@@ -1,4 +1,7 @@
-[![Build Status](https://travis-ci.org/ukautz/reflekt.svg?branch=v3)](https://travis-ci.org/ukautz/reflekt)
+[![Build Status](https://travis-ci.org/ukautz/reflekt.svg?branch=v4)](https://travis-ci.org/ukautz/reflekt)
+[![Coverage](https://gocover.io/_badge/github.com/ukautz/reflekt)](http://gocover.io/github.com/ukautz/reflekt)
+[![GoDoc](https://godoc.org/github.com/ukautz/reflekt?status.svg)](https://godoc.org/github.com/ukautz/reflekt)
+
 
 
 reflekt
