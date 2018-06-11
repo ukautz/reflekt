@@ -15,7 +15,7 @@ Installation
 ------------
 
 ```bash
-$ go get gopkg.in/ukautz/reflekt.v2
+$ go get gopkg.in/ukautz/reflekt.v4
 ```
 
 
@@ -31,7 +31,7 @@ Examples
 Determine whether anything is of a primitive type. 
 
 ```go
-import "gopkg.in/ukautz/reflekt.v2"
+import "gopkg.in/ukautz/reflekt.v4"
 
 if reflekt.IsInt(v) {
     fmt.Printf("Yes, %d is a native integer type", v)
@@ -45,7 +45,7 @@ if reflekt.IsInt(v) {
 ### Casting scalars
 
 ``` go
-import "gopkg.in/ukautz/reflekt.v2"
+import "gopkg.in/ukautz/reflekt.v4"
 
 si := "1.2"
 ii := 1
@@ -90,7 +90,7 @@ b = reflekt.AsBool(bs3) // true
 ### Casting maps
 
 ```go
-import "gopkg.in/ukautz/reflekt.v2"
+import "gopkg.in/ukautz/reflekt.v4"
 
 // object oriented
 m := map[string]interface{}{"foo": 1}
@@ -103,7 +103,7 @@ reflekt.AsStringMap(m) // map[string]string{"foo":"1"}
 ### Using OO interface
 
 ```go
-import "gopkg.in/ukautz/reflekt.v2"
+import "gopkg.in/ukautz/reflekt.v4"
 
 // object oriented
 v := reflekt.NewValue(1.23)
